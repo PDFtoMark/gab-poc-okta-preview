@@ -1,0 +1,41 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+
+    - name: Build the blog
+      run: |
+        mkdir -p dist
+        echo '<html>okta blog preview</html>' > dist/index.html
+
+    - name: Upload dist artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: dist
+        path: dist/
+
+    - name: Save PR metadata
+      if: github.event_name == 'pull_request'
+      run: |
+        echo "${{ github.event.pull_request.number }}" > pr_number.txt
+        echo "${{ github.event.pull_request.head.sha }}" > pr_sha.txt
+
+    - name: Upload PR metadata
+      if: github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v7
+      with:
+        name: pr-metadata
+        path: |
+          pr_number.txt
+          pr_sha.txt
